@@ -70,10 +70,19 @@ VehicleCommand QuadControl::GenerateMotorCommands(float collThrustCmd, V3F momen
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  cmd.desiredThrustsN[0] = mass * 9.81f / 4.f; // front left
-  cmd.desiredThrustsN[1] = mass * 9.81f / 4.f; // front right
-  cmd.desiredThrustsN[2] = mass * 9.81f / 4.f; // rear left
-  cmd.desiredThrustsN[3] = mass * 9.81f / 4.f; // rear right
+  // each arm is always at 45 degrees relative to each axis
+  // so the distance from propeller to the axis is
+  float l = L / sqrtf(2.f);
+
+  float collectiveThrust = collThrustCmd;
+  float rollMoment = momentCmd.x / l;
+  float pitchMoment = momentCmd.y / l;
+  float yawMoment = momentCmd.z / kappa;
+
+  cmd.desiredThrustsN[0] = (collectiveThrust + rollMoment + pitchMoment - yawMoment) / 4.f;
+  cmd.desiredThrustsN[1] = (collectiveThrust - rollMoment + pitchMoment + yawMoment) / 4.f;
+  cmd.desiredThrustsN[2] = (collectiveThrust + rollMoment - pitchMoment + yawMoment) / 4.f;
+  cmd.desiredThrustsN[3] = (collectiveThrust - rollMoment - pitchMoment - yawMoment) / 4.f;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -98,7 +107,9 @@ V3F QuadControl::BodyRateControl(V3F pqrCmd, V3F pqr)
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  
+  V3F I{Ixx, Iyy, Izz};
+
+  momentCmd = I * kpPQR * (pqrCmd - pqr);
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
