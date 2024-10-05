@@ -185,7 +185,13 @@ float QuadControl::AltitudeControl(float posZCmd, float velZCmd, float posZ, flo
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
+  integratedAltitudeError += dt * (posZCmd - posZ);
 
+  accelZCmd += kpPosZ * (posZCmd - posZ) + kpVelZ * (velZCmd - velZ) + KiPosZ * integratedAltitudeError;
+
+  float descentRate = CONSTRAIN(CONST_GRAVITY - accelZCmd, -maxAscentRate/dt, maxDescentRate/dt);
+
+  thrust = descentRate * mass / R[8];
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
   
@@ -223,7 +229,15 @@ V3F QuadControl::LateralPositionControl(V3F posCmd, V3F velCmd, V3F pos, V3F vel
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
-  
+  if (velCmd.mag() > maxSpeedXY) {
+    velCmd = velCmd.norm() * maxSpeedXY;
+  }
+
+  accelCmd += kpPosXY * (posCmd - pos) + kpVelXY * (velCmd - vel);
+
+  if (accelCmd.mag() > maxAccelXY) {
+    accelCmd = accelCmd.norm() * maxAccelXY;
+  }
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -246,6 +260,15 @@ float QuadControl::YawControl(float yawCmd, float yaw)
   float yawRateCmd=0;
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
 
+  float yawError = fmodf(yawCmd - yaw, 2.0f * M_PI);
+
+  if (yawError > M_PI) {
+    yawError -= 2.0f * M_PI;
+  } else if (yawError < -M_PI) {
+    yawError += 2.0f * M_PI;
+  }
+
+  yawRateCmd = kpYaw * yawError;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
